@@ -3,9 +3,21 @@
 #include <windows.h>
 #include <cmath>
 #include <vector>
+#include <iterator>
+#include <fstream>
+#include <algorithm>
+#include <string>
 
 int main()
 {
+	std::ifstream is_negative("negative.txt");
+	std::istream_iterator<int> start_negative(is_negative), end_negative;
+	std::vector<int> pixels_0(start_negative, end_negative);
+
+	std::ifstream is_positive("positive.txt");
+	std::istream_iterator<int> start_positive(is_positive), end_positive;
+	std::vector<int> pixels_1(start_positive, end_positive);
+
 	HackIH GD;
 
 	RECT rectGD;
@@ -22,15 +34,15 @@ int main()
 	srand(time(NULL));
 
 	float xMax = 0;
-	int gen = 1;
+	int gen = pixels_0.size() + 1;
 	int species = 1;
 	float lastX = 0;
 	float lastDeath = 0;
 
-	std::vector<int> pixels_0;
-	std::vector<int> pixels_1;
+	//std::vector<int> pixels_0;
+	//std::vector<int> pixels_1;
 
-	HDC GDHDC;
+	HDC GDHDC = GetDC(hGD);
 
 	//pixels_0.push_back(2148405);
 
@@ -55,12 +67,21 @@ int main()
 				gen++;
 				species = 1;
 				xMax = lastDeath;
-				//pixels_1.push_back((rand() % widthGD) * 4000 + (rand() % heightGD));
-				//pixels_0.push_back((rand() % widthGD) * 4000 + (rand() % heightGD));
+
+				std::ofstream output_file_negative("negative.txt");
+				std::ofstream output_file_positive("positive.txt");
+
+				std::ostream_iterator<int> output_iterator_negative(output_file_negative, "\n");
+				std::copy(pixels_0.begin(), pixels_0.end(), output_iterator_negative);
+				std::ostream_iterator<int> output_iterator_positive(output_file_positive, "\n");
+				std::copy(pixels_1.begin(), pixels_1.end(), output_iterator_positive);
+
+				pixels_1.push_back((rand() % widthGD) * 4000 + (rand() % heightGD));
+				pixels_0.push_back((rand() % widthGD) * 4000 + (rand() % heightGD));
 			}
 			else {
-				//pixels_1[pixels_1.size() - 1] = (rand() % widthGD) * 4000 + (rand() % heightGD);
-				//pixels_0[pixels_0.size() - 1] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+				pixels_1[pixels_1.size() - 1] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+				pixels_0[pixels_0.size() - 1] = (rand() % widthGD) * 4000 + (rand() % heightGD);
 			}
 
 			std::cout << "gen " << gen << " species " << species << " best " << xMax << std::endl;
@@ -72,7 +93,7 @@ int main()
 
 		sum = 0;
 
-		GDHDC = GetDC(FindWindow(0, "Geometry Dash"));
+		
 
 		// connections
 		for (int xy : pixels_0) {
