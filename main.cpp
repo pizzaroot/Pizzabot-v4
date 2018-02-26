@@ -8,15 +8,26 @@
 #include <algorithm>
 #include <string>
 
+using namespace std;
+
+#define POPSIZE 50
+#define MAXGENS 5000
+#define NVARS 10
+
+struct genotype
+{
+	int gene_p[NVARS];
+	int gene_n[NVARS];
+	float fitness;
+	float rfitness;
+};
+
+struct genotype population[POPSIZE + 1];
+struct genotype newpopulation[POPSIZE + 1];
+
 int main()
 {
-	std::ifstream is_negative("negative.txt");
-	std::istream_iterator<int> start_negative(is_negative), end_negative;
-	std::vector<int> pixels_0(start_negative, end_negative);
-
-	std::ifstream is_positive("positive.txt");
-	std::istream_iterator<int> start_positive(is_positive), end_positive;
-	std::vector<int> pixels_1(start_positive, end_positive);
+	std::cout << "Pizzabot v4.0\nAI that learns to play Geometry Dash\nMade by Pizzaroot\n" << std::endl;
 
 	HackIH GD;
 
@@ -31,60 +42,76 @@ int main()
 
 	float sum;
 	float xPos;
+
 	srand(time(NULL));
 
+	for (int i = 0; i < POPSIZE; i++) {
+		for (int j = 0; j < NVARS; j++) {
+			population[i].gene_p[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+			population[i].gene_n[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+		}
+		population[i].fitness = 0;
+		population[i].rfitness = 0;
+	}
+
 	float xMax = 0;
-	int gen = pixels_0.size() + 1;
-	int species = 1;
 	float lastX = 0;
 	float lastDeath = 0;
-
-	//std::vector<int> pixels_0;
-	//std::vector<int> pixels_1;
+	int gen = 0;
+	int pop = 0;
 
 	HDC GDHDC = GetDC(hGD);
 
-	//pixels_0.push_back(2148405);
-
 	int lastaction = 0;
-
-	//float macro[8192] = { 207.72, 259.65, 296.001, 311.58, 337.545, 353.124, 373.896, 394.668, 410.247, 425.826, 467.37, 482.949, 592.003, 659.514, 675.093, 693.252, 773.762, 815.307, 846.466, 864.045, 914.363, 965.714, 1023.03, 1077.35, 1158.05, 1189.2, 1241.13, 1272.29, 1308.64, 1334.6, 1420.65, 1496.35, 1537.13, 1578.67, 1656.56, 1680.3, 1724.07, 1744.84, 1786.38, 1807.16, 1827.93, 1843.51, 1885.05, 1905.82, 1942.17, 1957.75, 1994.1, 2009.68, 2046.03, 2071.99, 2108.35, 2134.31, 2612.1, 2648.46, 2690, 2710.78, 2736.74, 2754.75, 2779.86, 2796.6, 2821.71, 2842.64, 2867.76, 2876.13, 2892.87, 2905.43, 2922.17, 2930.54, 2943.1, 2951.47, 2980.77, 2984.95, 3018.44, 3043.55, 3068.66, 3099.22, 3130.38, 3208.28, 3319.24, 3338.61, 3697.39, 3806.59, 3861.19, 3900.18, 3923.58, 4056.66, 4095.66, 4134.66, 4173.67, 4197.07, 4314.08, 4423.29, 4493.5, 4540.3, 4626.11, 5021.19, 5044.59, 5067.99, 5083.59, 5122.6, 5146, 5224.01, 5239.61, 5302.01, 5317.62, 5372.22, 5419.03, 5458.03, 5653.05, 5676.45, 5707.65, 5738.86, 5777.86, 5801.26, 5855.87, 5879.27, 5926.08, 5957.28, 6288.61, 6507.04, 6600.65, 6616.25, 6702.06, 6754.71 };
 
 	GD.bind("GeometryDash.exe");
 
-	std::cout << "gen " << gen << " species " << species << " best " << xMax << std::endl;
+	std::cout << "gen " << gen << " population " << pop << std::endl;
 
 	do {
-
 		xPos = GD.Read<float>({ GD.BaseAddress , 0x3222D0 , 0x164, 0x224, 0x67C });
 		
 		if (lastX > xPos) { // new attempt
-			species++;
+			population[pop].fitness = lastX;
 
-			lastDeath = lastX;
+			if (pop >= POPSIZE - 1) {
+				float fitsum = 0;
+				float fitmax = 0;
+				int fitmaxindex = 0;
 
-			if (lastDeath > xMax) { // last death is the best
+				for (int i = 0; i < POPSIZE; i++) {
+					fitsum += population[i].fitness;
+					if (population[i].fitness > fitmax) {
+						fitmax = population[i].fitness;
+						fitmaxindex = i;
+					}
+				}
+
+				for (int i = 0; i < POPSIZE; i++) {
+					population[i].rfitness = population[i].fitness / fitsum * POPSIZE;
+					population[i].fitness = 0;
+					if (population[i].rfitness <= 1) {
+						for (int j = 0; j < NVARS; j++) {
+							if (rand() % 2 == 0) {
+								population[i].gene_p[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+								population[i].gene_n[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+							}
+							else {
+								population[i].gene_p[j] = population[fitmaxindex].gene_p[j];
+								population[i].gene_n[j] = population[fitmaxindex].gene_n[j];
+							}
+						} 
+					}
+				}
+
 				gen++;
-				species = 1;
-				xMax = lastDeath;
-
-				std::ofstream output_file_negative("negative.txt");
-				std::ofstream output_file_positive("positive.txt");
-
-				std::ostream_iterator<int> output_iterator_negative(output_file_negative, "\n");
-				std::copy(pixels_0.begin(), pixels_0.end(), output_iterator_negative);
-				std::ostream_iterator<int> output_iterator_positive(output_file_positive, "\n");
-				std::copy(pixels_1.begin(), pixels_1.end(), output_iterator_positive);
-
-				pixels_1.push_back((rand() % widthGD) * 4000 + (rand() % heightGD));
-				pixels_0.push_back((rand() % widthGD) * 4000 + (rand() % heightGD));
+				pop = 0;
 			}
 			else {
-				pixels_1[pixels_1.size() - 1] = (rand() % widthGD) * 4000 + (rand() % heightGD);
-				pixels_0[pixels_0.size() - 1] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+				pop++;
 			}
 
-			std::cout << "gen " << gen << " species " << species << " best " << xMax << std::endl;
+			std::cout << "gen " << gen << " population " << pop << std::endl;
 
 			mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
 
@@ -93,27 +120,22 @@ int main()
 
 		sum = 0;
 
-		
-
-		// connections
-		for (int xy : pixels_0) {
+		for (int xy : population[pop].gene_p) {
 			DWORD colour = GetPixel(GDHDC, floor(xy / 4000), xy % 4000);
 			int r = GetRValue(colour);
 			int g = GetGValue(colour);
 			int b = GetBValue(colour);
 			float neuron = (r + g + b - 383) / (float)383;
 			sum += neuron * -1;
-			//std::cout << "x: " << floor(xy / 4000) << ", y: " << xy % 4000 << ", rgb: (" << r << ", " << g << ", " << b << "), neuron: " << neuron << "" << std::endl;
 		}
 
-		for (int xy : pixels_1) {
+		for (int xy : population[pop].gene_n) {
 			DWORD colour = GetPixel(GDHDC, floor(xy / 4000), xy % 4000);
 			int r = GetRValue(colour);
 			int g = GetGValue(colour);
 			int b = GetBValue(colour);
 			float neuron = (r + g + b - 383) / (float)383;
 			sum += neuron * 1;
-			//std::cout << "x: " << floor(xy / 4000) << ", y: " << xy % 4000 << ", rgb: (" << r << ", " << g << ", " << b << "), neuron: " << neuron << "" << std::endl;
 		}
 
 		if (sum > 0) {
@@ -128,8 +150,6 @@ int main()
 				lastaction = 0;
 			}
 		}
-
-		//std::cout << sum << std::endl;
 
 		lastX = xPos;
 	} while (true);
