@@ -7,12 +7,12 @@
 #include <fstream>
 #include <algorithm>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
 #define POPSIZE 50
-#define MAXGENS 5000
-#define NVARS 10
+#define NVARS 100
 
 struct genotype
 {
@@ -27,28 +27,84 @@ struct genotype newpopulation[POPSIZE + 1];
 
 int main()
 {
+	int block_blocks[] = {1, 2, 3, 4, 6, 7, 40, 62, 65, 83};
+	int block_obstacles[] = {8, 9, 39, 103};
+	int block_orbs[] = {36, 84};
+	int block_pads[] = {35, 67};
+
+	std::ifstream level_file("level.txt");
+	std::string str;
+	std::string level;
+	while (std::getline(level_file, str))
+	{
+		level = str;
+	}
+
+	std::istringstream ss(level);
+	std::string token;
+
+	std::vector<std::vector<float>> locblock_block;
+	std::vector<std::vector<float>> locblock_obstacle;
+	std::vector<std::vector<float>> locblock_orb;
+	std::vector<std::vector<float>> locblock_pad;
+
+	while (std::getline(ss, token, ';')) {
+		std::istringstream ssblock(token);
+		std::string token2;
+
+		int i = 0;
+
+		int type;
+		float x;
+		float y;
+
+		while (std::getline(ssblock, token2, ',')) {
+			if (i == 1) {
+				type = std::stoi(token2);
+			}
+			else if (i == 3) {
+				x = ::atof(token2.c_str());
+			}
+			else if (i == 5) {
+				y = ::atof(token2.c_str());
+			}
+
+			i++;
+		}
+
+		std::vector<float> xy_array = {x, y};
+
+		if (std::find(std::begin(block_blocks), std::end(block_blocks), type) != std::end(block_blocks)) {
+			locblock_block.push_back(xy_array);
+		}
+		else if (std::find(std::begin(block_obstacles), std::end(block_obstacles), type) != std::end(block_obstacles)) {
+			locblock_obstacle.push_back(xy_array);
+		}
+		else if (std::find(std::begin(block_orbs), std::end(block_orbs), type) != std::end(block_orbs)) {
+			locblock_orb.push_back(xy_array);
+		}
+		else if (std::find(std::begin(block_pads), std::end(block_pads), type) != std::end(block_pads)) {
+			locblock_pad.push_back(xy_array);
+		}
+	}
+
 	std::cout << "Pizzabot v4.0\nAI that learns to play Geometry Dash\nMade by Pizzaroot\n" << std::endl;
 
 	HackIH GD;
 
-	RECT rectGD;
-
-	HWND hGD = FindWindow(0, "Geometry Dash");
-	
-	GetWindowRect(hGD, &rectGD);
-
-	int widthGD = rectGD.right - rectGD.left;
-	int heightGD = rectGD.bottom - rectGD.top;
+	int widthGD = 600;
+	int heightGD = 400;
 
 	float sum;
 	float xPos;
+	float yPos;
 
 	srand(time(NULL));
 
 	for (int i = 0; i < POPSIZE; i++) {
 		for (int j = 0; j < NVARS; j++) {
-			population[i].gene_p[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
-			population[i].gene_n[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+			population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+			population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
 		}
 		population[i].fitness = 0;
 		population[i].rfitness = 0;
@@ -60,8 +116,6 @@ int main()
 	int gen = 0;
 	int pop = 0;
 
-	HDC GDHDC = GetDC(hGD);
-
 	int lastaction = 0;
 
 	GD.bind("GeometryDash.exe");
@@ -70,7 +124,8 @@ int main()
 
 	do {
 		xPos = GD.Read<float>({ GD.BaseAddress , 0x3222D0 , 0x164, 0x224, 0x67C });
-		
+		yPos = GD.Read<float>({ GD.BaseAddress , 0x3222D0 , 0x164, 0x38C, 0xB4, 0x224, 0x680 });
+
 		if (lastX > xPos) { // new attempt
 			population[pop].fitness = lastX;
 
@@ -93,8 +148,8 @@ int main()
 					if (population[i].rfitness <= 1) {
 						for (int j = 0; j < NVARS; j++) {
 							if (rand() % 2 == 0) {
-								population[i].gene_p[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
-								population[i].gene_n[j] = (rand() % widthGD) * 4000 + (rand() % heightGD);
+								population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+								population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
 							}
 							else {
 								population[i].gene_p[j] = population[fitmaxindex].gene_p[j];
@@ -121,21 +176,55 @@ int main()
 		sum = 0;
 
 		for (int xy : population[pop].gene_p) {
-			DWORD colour = GetPixel(GDHDC, floor(xy / 4000), xy % 4000);
-			int r = GetRValue(colour);
-			int g = GetGValue(colour);
-			int b = GetBValue(colour);
-			float neuron = (r + g + b - 383) / (float)383;
-			sum += neuron * -1;
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
+			for (int i = 0; i < locblock_block.size(); i++) {
+				if (locblock_block[i][0] - xPos + 200 < 600 && locblock_block[i][1] - yPos + 200 < 400 && locblock_block[i][0] - xPos + 200 - 15 < rx && rx < locblock_block[i][0] - xPos + 200 + 15 && locblock_block[i][1] - yPos + 200 - 15 < ry && ry < locblock_block[i][1] - yPos + 200 + 15) {
+					sum += 1;
+				}
+			}
+			for (int i = 0; i < locblock_obstacle.size(); i++) {
+				if (locblock_obstacle[i][0] - xPos + 200 < 600 && locblock_obstacle[i][1] - yPos + 200 < 400 && locblock_obstacle[i][0] - xPos + 200 - 15 < rx && rx < locblock_obstacle[i][0] - xPos + 200 + 15 && locblock_obstacle[i][1] - yPos + 200 - 15 < ry && ry < locblock_obstacle[i][1] - yPos + 200 + 15) {
+					sum += 1;
+				}
+			}
+			for (int i = 0; i < locblock_orb.size(); i++) {
+				if (locblock_orb[i][0] - xPos + 200 < 600 && locblock_orb[i][1] - yPos + 200 < 400 && locblock_orb[i][0] - xPos + 200 - 15 < rx && rx < locblock_orb[i][0] - xPos + 200 + 15 && locblock_orb[i][1] - yPos + 200 - 15 < ry && ry < locblock_orb[i][1] - yPos + 200 + 15) {
+					sum += -1;
+				}
+			}
+			for (int i = 0; i < locblock_pad.size(); i++) {
+				if (locblock_pad[i][0] - xPos + 200 < 600 && locblock_pad[i][1] - yPos + 200 < 400 && locblock_pad[i][0] - xPos + 200 - 15 < rx && rx < locblock_pad[i][0] - xPos + 200 + 15 && locblock_pad[i][1] - yPos + 200 - 15 < ry && ry < locblock_pad[i][1] - yPos + 200 + 15) {
+					sum += -1;
+				}
+			}
 		}
 
 		for (int xy : population[pop].gene_n) {
-			DWORD colour = GetPixel(GDHDC, floor(xy / 4000), xy % 4000);
-			int r = GetRValue(colour);
-			int g = GetGValue(colour);
-			int b = GetBValue(colour);
-			float neuron = (r + g + b - 383) / (float)383;
-			sum += neuron * 1;
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
+			for (int i = 0; i < locblock_block.size(); i++) {
+				if (locblock_block[i][0] - xPos + 200 < 600 && locblock_block[i][1] - yPos + 200 < 400 && locblock_block[i][0] - xPos + 200 - 15 < rx && rx < locblock_block[i][0] - xPos + 200 + 15 && locblock_block[i][1] - yPos + 200 - 15 < ry && ry < locblock_block[i][1] - yPos + 200 + 15) {
+					sum += -1;
+				}
+			}
+			for (int i = 0; i < locblock_obstacle.size(); i++) {
+				if (locblock_obstacle[i][0] - xPos + 200 < 600 && locblock_obstacle[i][1] - yPos + 200 < 400 && locblock_obstacle[i][0] - xPos + 200 - 15 < rx && rx < locblock_obstacle[i][0] - xPos + 200 + 15 && locblock_obstacle[i][1] - yPos + 200 - 15 < ry && ry < locblock_obstacle[i][1] - yPos + 200 + 15) {
+					sum += -1;
+				}
+			}
+			for (int i = 0; i < locblock_orb.size(); i++) {
+				if (locblock_orb[i][0] - xPos + 200 < 600 && locblock_orb[i][1] - yPos + 200 < 400 && locblock_orb[i][0] - xPos + 200 - 15 < rx && rx < locblock_orb[i][0] - xPos + 200 + 15 && locblock_orb[i][1] - yPos + 200 - 15 < ry && ry < locblock_orb[i][1] - yPos + 200 + 15) {
+					sum += 1;
+				}
+			}
+			for (int i = 0; i < locblock_pad.size(); i++) {
+				if (locblock_pad[i][0] - xPos + 200 < 600 && locblock_pad[i][1] - yPos + 200 < 400 && locblock_pad[i][0] - xPos + 200 - 15 < rx && rx < locblock_pad[i][0] - xPos + 200 + 15 && locblock_pad[i][1] - yPos + 200 - 15 < ry && ry < locblock_pad[i][1] - yPos + 200 + 15) {
+					sum += 1;
+				}
+			}
 		}
 
 		if (sum > 0) {
