@@ -110,13 +110,13 @@ int main()
 	{
 		if (str2 != "") {
 			if (i1 < 50) {
-				population[i1].gene_p[j1] = std::stoi(str2);
+				population[i1 % 50].gene_p[j1] = std::stoi(str2);
 			}
 			else {
-				population[i1].gene_n[j1] = std::stoi(str2);
+				population[i1 % 50].gene_n[j1] = std::stoi(str2);
 			}
 			j1++;
-			if (j1 == 50) {
+			if (j1 == 100) {
 				i1++;
 				j1 = 0;
 			}
@@ -167,23 +167,6 @@ int main()
 			population[pop].fitness = lastX;
 
 			if (pop >= POPSIZE - 1) {
-				std::ofstream outfile;
-				
-				outfile.open(databasefile);
-
-				for (int i = 0; i < POPSIZE; i++) {
-					for (int j = 0; j < NVARS; j++) {
-						outfile << population[i].gene_p[j] << std::endl;
-					}
-				}
-				for (int i = 0; i < POPSIZE; i++) {
-					for (int j = 0; j < NVARS; j++) {
-						outfile << population[i].gene_n[j] << std::endl;
-					}
-				}
-
-				outfile.close();
-
 				float fitsum = 0;
 				float fitmax = 0;
 				int fitmaxindex = 0;
@@ -214,6 +197,23 @@ int main()
 						} 
 					}
 				}
+
+				std::ofstream outfile;
+
+				outfile.open(databasefile);
+
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_p[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_n[j] << std::endl;
+					}
+				}
+
+				outfile.close();
 
 				gen++;
 				pop = 0;
