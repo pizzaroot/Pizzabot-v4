@@ -27,12 +27,19 @@ struct genotype newpopulation[POPSIZE + 1];
 
 int main()
 {
+	std::cout << "Pizzabot v4.0\nAI that learns to play Geometry Dash\nMade by Pizzaroot\n" << std::endl;
+
 	int block_blocks[] = {1, 2, 3, 4, 6, 7, 40, 62, 65, 83};
 	int block_obstacles[] = {8, 9, 39, 103};
 	int block_orbs[] = {36, 84};
 	int block_pads[] = {35, 67};
 
-	std::ifstream level_file("level.txt");
+	std::string levelstringfile;
+
+	std::cout << "Import Level File: ";
+	std::cin >> levelstringfile;
+
+	std::ifstream level_file(levelstringfile);
 	std::string str;
 	std::string level;
 	while (std::getline(level_file, str))
@@ -88,7 +95,35 @@ int main()
 		}
 	}
 
-	std::cout << "Pizzabot v4.0\nAI that learns to play Geometry Dash\nMade by Pizzaroot\n" << std::endl;
+	std::string databasefile;
+
+	std::cout << "Database File: ";
+	std::cin >> databasefile;
+
+	std::ifstream data_file(databasefile);
+	std::string str2;
+
+	int i1 = 0;
+	int j1 = 0;
+
+	while (std::getline(data_file, str2))
+	{
+		if (str2 != "") {
+			if (i1 < 50) {
+				population[i1].gene_p[j1] = std::stoi(str2);
+			}
+			else {
+				population[i1].gene_n[j1] = std::stoi(str2);
+			}
+			j1++;
+			if (j1 == 50) {
+				i1++;
+				j1 = 0;
+			}
+		}
+	}
+
+	data_file.close();
 
 	HackIH GD;
 
@@ -101,13 +136,15 @@ int main()
 
 	srand(time(NULL));
 
-	for (int i = 0; i < POPSIZE; i++) {
-		for (int j = 0; j < NVARS; j++) {
-			population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-			population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+	if (i1 == 0) {
+		for (int i = 0; i < POPSIZE; i++) {
+			for (int j = 0; j < NVARS; j++) {
+				population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+			}
+			population[i].fitness = 0;
+			population[i].rfitness = 0;
 		}
-		population[i].fitness = 0;
-		population[i].rfitness = 0;
 	}
 
 	float xMax = 0;
@@ -130,6 +167,23 @@ int main()
 			population[pop].fitness = lastX;
 
 			if (pop >= POPSIZE - 1) {
+				std::ofstream outfile;
+				
+				outfile.open(databasefile);
+
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_p[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_n[j] << std::endl;
+					}
+				}
+
+				outfile.close();
+
 				float fitsum = 0;
 				float fitmax = 0;
 				int fitmaxindex = 0;
@@ -148,8 +202,10 @@ int main()
 					if (population[i].rfitness <= 1) {
 						for (int j = 0; j < NVARS; j++) {
 							if (rand() % 2 == 0) {
-								population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-								population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+								if (rand() % 4 == 0) {
+									population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+								}
 							}
 							else {
 								population[i].gene_p[j] = population[fitmaxindex].gene_p[j];
