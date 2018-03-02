@@ -16,8 +16,14 @@ using namespace std;
 
 struct genotype
 {
-	int gene_p[NVARS];
-	int gene_n[NVARS];
+	int gene_p_blocks[NVARS];
+	int gene_n_blocks[NVARS];
+	int gene_p_obstacles[NVARS];
+	int gene_n_obstacles[NVARS];
+	int gene_p_orbs[NVARS];
+	int gene_n_orbs[NVARS];
+	int gene_p_pads[NVARS];
+	int gene_n_pads[NVARS];
 	float fitness;
 	float rfitness;
 };
@@ -30,7 +36,7 @@ int main()
 	std::cout << "Pizzabot v4.0\nAI that learns to play Geometry Dash\nMade by Pizzaroot\n" << std::endl;
 
 	int block_blocks[] = {1, 2, 3, 4, 6, 7, 40, 62, 65, 83};
-	int block_obstacles[] = {8, 9, 39, 103};
+	int block_obstacles[] = {8, 9, 39, 103, 144};
 	int block_orbs[] = {36, 84};
 	int block_pads[] = {35, 67};
 
@@ -110,10 +116,28 @@ int main()
 	{
 		if (str2 != "") {
 			if (i1 < 50) {
-				population[i1 % 50].gene_p[j1] = std::stoi(str2);
+				population[i1 % 50].gene_p_blocks[j1] = std::stoi(str2);
 			}
-			else {
-				population[i1 % 50].gene_n[j1] = std::stoi(str2);
+			else if (i1 < 100) {
+				population[i1 % 50].gene_n_blocks[j1] = std::stoi(str2);
+			}
+			else if (i1 < 150) {
+				population[i1 % 50].gene_p_obstacles[j1] = std::stoi(str2);
+			}
+			else if (i1 < 200) {
+				population[i1 % 50].gene_n_obstacles[j1] = std::stoi(str2);
+			}
+			else if (i1 < 250) {
+				population[i1 % 50].gene_p_orbs[j1] = std::stoi(str2);
+			}
+			else if (i1 < 300) {
+				population[i1 % 50].gene_n_orbs[j1] = std::stoi(str2);
+			}
+			else if (i1 < 350) {
+				population[i1 % 50].gene_p_pads[j1] = std::stoi(str2);
+			}
+			else if (i1 < 400) {
+				population[i1 % 50].gene_n_pads[j1] = std::stoi(str2);
 			}
 			j1++;
 			if (j1 == 100) {
@@ -139,8 +163,14 @@ int main()
 	if (i1 == 0) {
 		for (int i = 0; i < POPSIZE; i++) {
 			for (int j = 0; j < NVARS; j++) {
-				population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-				population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_p_blocks[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_n_blocks[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_p_obstacles[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_n_obstacles[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_p_orbs[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_n_orbs[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_p_pads[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+				population[i].gene_n_pads[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
 			}
 			population[i].fitness = 0;
 			population[i].rfitness = 0;
@@ -159,12 +189,16 @@ int main()
 
 	std::cout << "gen " << gen << " population " << pop << std::endl;
 
+	float startX = 0;
+
 	do {
 		xPos = GD.Read<float>({ GD.BaseAddress , 0x3222D0 , 0x164, 0x224, 0x67C });
 		yPos = GD.Read<float>({ GD.BaseAddress , 0x3222D0 , 0x164, 0x38C, 0xB4, 0x224, 0x680 });
 
 		if (lastX > xPos) { // new attempt
-			population[pop].fitness = lastX;
+			population[pop].fitness = lastX - startX;
+
+			startX = xPos;
 
 			if (pop >= POPSIZE - 1) {
 				float fitsum = 0;
@@ -186,13 +220,25 @@ int main()
 						for (int j = 0; j < NVARS; j++) {
 							if (rand() % 2 == 0) {
 								if (rand() % 4 == 0) {
-									population[i].gene_p[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_n[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_p_blocks[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_n_blocks[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_p_obstacles[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_n_obstacles[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_p_orbs[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_n_orbs[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_p_pads[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
+									population[i].gene_n_pads[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
 								}
 							}
 							else {
-								population[i].gene_p[j] = population[fitmaxindex].gene_p[j];
-								population[i].gene_n[j] = population[fitmaxindex].gene_n[j];
+								population[i].gene_p_blocks[j] = population[fitmaxindex].gene_p_blocks[j];
+								population[i].gene_n_blocks[j] = population[fitmaxindex].gene_n_blocks[j];
+								population[i].gene_p_obstacles[j] = population[fitmaxindex].gene_p_obstacles[j];
+								population[i].gene_p_obstacles[j] = population[fitmaxindex].gene_p_obstacles[j];
+								population[i].gene_p_orbs[j] = population[fitmaxindex].gene_p_orbs[j];
+								population[i].gene_p_orbs[j] = population[fitmaxindex].gene_p_orbs[j];
+								population[i].gene_p_pads[j] = population[fitmaxindex].gene_p_pads[j];
+								population[i].gene_p_pads[j] = population[fitmaxindex].gene_p_pads[j];
 							}
 						} 
 					}
@@ -204,12 +250,42 @@ int main()
 
 				for (int i = 0; i < POPSIZE; i++) {
 					for (int j = 0; j < NVARS; j++) {
-						outfile << population[i].gene_p[j] << std::endl;
+						outfile << population[i].gene_p_blocks[j] << std::endl;
 					}
 				}
 				for (int i = 0; i < POPSIZE; i++) {
 					for (int j = 0; j < NVARS; j++) {
-						outfile << population[i].gene_n[j] << std::endl;
+						outfile << population[i].gene_n_blocks[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_p_obstacles[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_n_obstacles[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_p_orbs[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_n_orbs[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_p_pads[j] << std::endl;
+					}
+				}
+				for (int i = 0; i < POPSIZE; i++) {
+					for (int j = 0; j < NVARS; j++) {
+						outfile << population[i].gene_n_pads[j] << std::endl;
 					}
 				}
 
@@ -229,9 +305,13 @@ int main()
 			lastaction = 0;
 		}
 
+		///////////////////////
+		/* CALCULATE THE SUM */
+		///////////////////////
+
 		sum = 0;
 
-		for (int xy : population[pop].gene_p) {
+		for (int xy : population[pop].gene_p_blocks) {
 			int rx = floor(xy / 500);
 			int ry = xy % 500;
 
@@ -240,42 +320,78 @@ int main()
 					sum += 1;
 				}
 			}
-			for (int i = 0; i < locblock_obstacle.size(); i++) {
-				if (locblock_obstacle[i][0] - xPos + 200 < 600 && locblock_obstacle[i][1] - yPos + 200 < 400 && locblock_obstacle[i][0] - xPos + 200 - 15 < rx && rx < locblock_obstacle[i][0] - xPos + 200 + 15 && locblock_obstacle[i][1] - yPos + 200 - 15 < ry && ry < locblock_obstacle[i][1] - yPos + 200 + 15) {
-					sum += 1;
-				}
-			}
-			for (int i = 0; i < locblock_orb.size(); i++) {
-				if (locblock_orb[i][0] - xPos + 200 < 600 && locblock_orb[i][1] - yPos + 200 < 400 && locblock_orb[i][0] - xPos + 200 - 15 < rx && rx < locblock_orb[i][0] - xPos + 200 + 15 && locblock_orb[i][1] - yPos + 200 - 15 < ry && ry < locblock_orb[i][1] - yPos + 200 + 15) {
-					sum += -1;
-				}
-			}
-			for (int i = 0; i < locblock_pad.size(); i++) {
-				if (locblock_pad[i][0] - xPos + 200 < 600 && locblock_pad[i][1] - yPos + 200 < 400 && locblock_pad[i][0] - xPos + 200 - 15 < rx && rx < locblock_pad[i][0] - xPos + 200 + 15 && locblock_pad[i][1] - yPos + 200 - 15 < ry && ry < locblock_pad[i][1] - yPos + 200 + 15) {
+		}
+
+		for (int xy : population[pop].gene_n_blocks) {
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
+			for (int i = 0; i < locblock_block.size(); i++) {
+				if (locblock_block[i][0] - xPos + 200 < 600 && locblock_block[i][1] - yPos + 200 < 400 && locblock_block[i][0] - xPos + 200 - 15 < rx && rx < locblock_block[i][0] - xPos + 200 + 15 && locblock_block[i][1] - yPos + 200 - 15 < ry && ry < locblock_block[i][1] - yPos + 200 + 15) {
 					sum += -1;
 				}
 			}
 		}
 
-		for (int xy : population[pop].gene_n) {
+		for (int xy : population[pop].gene_p_obstacles) {
 			int rx = floor(xy / 500);
 			int ry = xy % 500;
 
-			for (int i = 0; i < locblock_block.size(); i++) {
-				if (locblock_block[i][0] - xPos + 200 < 600 && locblock_block[i][1] - yPos + 200 < 400 && locblock_block[i][0] - xPos + 200 - 15 < rx && rx < locblock_block[i][0] - xPos + 200 + 15 && locblock_block[i][1] - yPos + 200 - 15 < ry && ry < locblock_block[i][1] - yPos + 200 + 15) {
-					sum += -1;
+			for (int i = 0; i < locblock_obstacle.size(); i++) {
+				if (locblock_obstacle[i][0] - xPos + 200 < 600 && locblock_obstacle[i][1] - yPos + 200 < 400 && locblock_obstacle[i][0] - xPos + 200 - 15 < rx && rx < locblock_obstacle[i][0] - xPos + 200 + 15 && locblock_obstacle[i][1] - yPos + 200 - 15 < ry && ry < locblock_obstacle[i][1] - yPos + 200 + 15) {
+					sum += 1;
 				}
 			}
+		}
+
+		for (int xy : population[pop].gene_n_obstacles) {
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
 			for (int i = 0; i < locblock_obstacle.size(); i++) {
 				if (locblock_obstacle[i][0] - xPos + 200 < 600 && locblock_obstacle[i][1] - yPos + 200 < 400 && locblock_obstacle[i][0] - xPos + 200 - 15 < rx && rx < locblock_obstacle[i][0] - xPos + 200 + 15 && locblock_obstacle[i][1] - yPos + 200 - 15 < ry && ry < locblock_obstacle[i][1] - yPos + 200 + 15) {
 					sum += -1;
 				}
 			}
+		}
+
+		for (int xy : population[pop].gene_p_orbs) {
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
 			for (int i = 0; i < locblock_orb.size(); i++) {
 				if (locblock_orb[i][0] - xPos + 200 < 600 && locblock_orb[i][1] - yPos + 200 < 400 && locblock_orb[i][0] - xPos + 200 - 15 < rx && rx < locblock_orb[i][0] - xPos + 200 + 15 && locblock_orb[i][1] - yPos + 200 - 15 < ry && ry < locblock_orb[i][1] - yPos + 200 + 15) {
 					sum += 1;
 				}
 			}
+		}
+
+		for (int xy : population[pop].gene_n_orbs) {
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
+			for (int i = 0; i < locblock_orb.size(); i++) {
+				if (locblock_orb[i][0] - xPos + 200 < 600 && locblock_orb[i][1] - yPos + 200 < 400 && locblock_orb[i][0] - xPos + 200 - 15 < rx && rx < locblock_orb[i][0] - xPos + 200 + 15 && locblock_orb[i][1] - yPos + 200 - 15 < ry && ry < locblock_orb[i][1] - yPos + 200 + 15) {
+					sum += 1;
+				}
+			}
+		}
+
+		for (int xy : population[pop].gene_p_pads) {
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
+			for (int i = 0; i < locblock_pad.size(); i++) {
+				if (locblock_pad[i][0] - xPos + 200 < 600 && locblock_pad[i][1] - yPos + 200 < 400 && locblock_pad[i][0] - xPos + 200 - 15 < rx && rx < locblock_pad[i][0] - xPos + 200 + 15 && locblock_pad[i][1] - yPos + 200 - 15 < ry && ry < locblock_pad[i][1] - yPos + 200 + 15) {
+					sum += 1;
+				}
+			}
+		}
+
+		for (int xy : population[pop].gene_n_pads) {
+			int rx = floor(xy / 500);
+			int ry = xy % 500;
+
 			for (int i = 0; i < locblock_pad.size(); i++) {
 				if (locblock_pad[i][0] - xPos + 200 < 600 && locblock_pad[i][1] - yPos + 200 < 400 && locblock_pad[i][0] - xPos + 200 - 15 < rx && rx < locblock_pad[i][0] - xPos + 200 + 15 && locblock_pad[i][1] - yPos + 200 - 15 < ry && ry < locblock_pad[i][1] - yPos + 200 + 15) {
 					sum += 1;
