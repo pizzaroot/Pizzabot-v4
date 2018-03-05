@@ -201,46 +201,61 @@ int main()
 			startX = xPos;
 
 			if (pop >= POPSIZE - 1) {
-				float fitsum = 0;
-				float fitmax = 0;
-				int fitmaxindex = 0;
+				int sorted_index[POPSIZE];
+				int sorted_index_reverse[POPSIZE]; // index number of population's fitness
 
 				for (int i = 0; i < POPSIZE; i++) {
-					fitsum += population[i].fitness;
-					if (population[i].fitness > fitmax) {
-						fitmax = population[i].fitness;
-						fitmaxindex = i;
+					sorted_index[i] = i;
+				}
+
+				for (int i = 1; i < POPSIZE; i++) {
+					for (int j = 0; j < POPSIZE - i; j++) {
+						if (population[j].fitness > population[j + 1].fitness) {
+							int temp_fit = population[j].fitness;
+							population[j].fitness = population[j + 1].fitness;
+							population[j + 1].fitness = temp_fit;
+							int temp = sorted_index[j];
+							sorted_index[j] = sorted_index[j + 1];
+							sorted_index[j + 1] = temp;
+						}
 					}
 				}
 
 				for (int i = 0; i < POPSIZE; i++) {
-					population[i].rfitness = population[i].fitness / fitsum * POPSIZE;
+					sorted_index_reverse[sorted_index[i]] = i;
+				}
+
+				for (int i = 0; i < POPSIZE; i++) {
 					population[i].fitness = 0;
-					if (population[i].rfitness <= 1) {
-						for (int j = 0; j < NVARS; j++) {
-							if (rand() % 2 == 0) {
-								if (rand() % 4 == 0) {
-									population[i].gene_p_blocks[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_n_blocks[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_p_obstacles[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_n_obstacles[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_p_orbs[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_n_orbs[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_p_pads[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-									population[i].gene_n_pads[j] = (rand() % widthGD) * 500 + (rand() % heightGD);
-								}
-							}
-							else {
-								population[i].gene_p_blocks[j] = population[fitmaxindex].gene_p_blocks[j];
-								population[i].gene_n_blocks[j] = population[fitmaxindex].gene_n_blocks[j];
-								population[i].gene_p_obstacles[j] = population[fitmaxindex].gene_p_obstacles[j];
-								population[i].gene_p_obstacles[j] = population[fitmaxindex].gene_p_obstacles[j];
-								population[i].gene_p_orbs[j] = population[fitmaxindex].gene_p_orbs[j];
-								population[i].gene_p_orbs[j] = population[fitmaxindex].gene_p_orbs[j];
-								population[i].gene_p_pads[j] = population[fitmaxindex].gene_p_pads[j];
-								population[i].gene_p_pads[j] = population[fitmaxindex].gene_p_pads[j];
-							}
-						} 
+
+					int clear_count = 0;
+
+					for (int j = 0; j < floor((POPSIZE - sorted_index_reverse[i] - 1) * NVARS / POPSIZE / 4); j++) {
+						int random_index = rand() % NVARS;
+						population[i].gene_p_blocks[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						population[i].gene_n_blocks[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						population[i].gene_p_obstacles[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						population[i].gene_p_obstacles[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						population[i].gene_p_orbs[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						population[i].gene_p_orbs[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						population[i].gene_p_pads[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						population[i].gene_p_pads[random_index] = (rand() % widthGD) * 500 + (rand() % heightGD);
+						clear_count++;
+					}
+
+					for (int j = sorted_index_reverse[i] + 1; j < POPSIZE; j++) {
+						for (int k = 0; k < sqrt(j); k++) {
+							int random_index = rand() % NVARS;
+							population[i].gene_p_blocks[random_index] = population[sorted_index[j]].gene_p_blocks[random_index];
+							population[i].gene_n_blocks[random_index] = population[sorted_index[j]].gene_n_blocks[random_index];
+							population[i].gene_p_obstacles[random_index] = population[sorted_index[j]].gene_p_obstacles[random_index];
+							population[i].gene_p_obstacles[random_index] = population[sorted_index[j]].gene_p_obstacles[random_index];
+							population[i].gene_p_orbs[random_index] = population[sorted_index[j]].gene_p_orbs[random_index];
+							population[i].gene_p_orbs[random_index] = population[sorted_index[j]].gene_p_orbs[random_index];
+							population[i].gene_p_pads[random_index] = population[sorted_index[j]].gene_p_pads[random_index];
+							population[i].gene_p_pads[random_index] = population[sorted_index[j]].gene_p_pads[random_index];
+							clear_count++;
+						}
 					}
 				}
 
